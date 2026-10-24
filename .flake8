@@ -1,0 +1,4 @@
+[flake8]
+exclude = .git,.venv,venv,.mypy_cache,__pycache__,build,dist
+max-line-length = 79
+jobs = 1

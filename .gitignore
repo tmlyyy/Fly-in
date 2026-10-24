@@ -1,0 +1,19 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+# Local verification programs: not part of the graded submission (III.3).
+tests/
+# Local reference files and workspace settings.
+docs/fly-in.subject.pdf
+docs/maps.tar.gz
+.agents/
+.aws/
+.codex/

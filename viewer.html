@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fly-in — visualização dos drones</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f1f5f9; color: #0f172a;
+      font: 16px/1.5 system-ui, sans-serif; }
+    main { max-width: 1240px; margin: 28px auto; padding: 0 20px; }
+    h1 { margin-bottom: 0; font-size: 30px; }
+    .intro, .hint { color: #475569; }
+    .intro { margin-top: 4px; }
+    .panel { padding: 20px; background: white; border: 1px solid #e2e8f0;
+      border-radius: 12px; }
+    .controls { display: flex; flex-wrap: wrap; gap: 10px;
+      align-items: center; margin-bottom: 16px; }
+    button, select { font: inherit; border: 1px solid #cbd5e1;
+      background: white; padding: 8px 12px; border-radius: 6px; }
+    button { cursor: pointer; }
+    button:disabled { opacity: .45; cursor: default; }
+    button:focus-visible, select:focus-visible, input:focus-visible {
+      outline: 3px solid #93c5fd; outline-offset: 2px; }
+    #play { background: #1d4ed8; color: white; border-color: #1d4ed8; }
+    #turn-label { margin-left: auto; font-weight: 600; }
+    #timeline { width: 100%; accent-color: #1d4ed8; }
+    .summary { font-size: 18px; }
+    .network { overflow: auto; max-height: 65vh; min-height: 320px;
+      border: 1px solid #e2e8f0; border-radius: 8px; background: #fafcff; }
+    svg { display: block; }
+    svg text { text-anchor: middle; font: 14px system-ui, sans-serif;
+      fill: #334155; paint-order: stroke; stroke: #fafcff;
+      stroke-width: 4px; stroke-linejoin: round; }
+    svg .count { font-size: 20px; font-weight: 700; stroke: none; }
+    svg .hub-label { font-size: 15px; font-weight: 600; }
+    svg .detail, svg .link-label { font-size: 12px; fill: #64748b; }
+    svg .drone-label { font-size: 12px; fill: #1d4ed8; }
+    .moves { overflow-wrap: anywhere; }
+    .hint { font-size: 14px; margin-bottom: 0; }
+    .legend { display: flex; flex-wrap: wrap; gap: 18px; font-size: 14px;
+      margin: 18px 0 6px; color: #475569; }
+    noscript { display: block; padding: 16px; background: #fef3c7; }
+    @media (max-width: 600px) {
+      main { padding: 0 10px; margin-top: 16px; }
+      .panel { padding: 12px; }
+      #turn-label { width: 100%; margin: 0; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Fly-in</h1>
+  <p class="intro">Acompanhe as rotas dos drones, um turno de cada vez.</p>
+  <div class="panel">
+    <div class="controls">
+      <button id="reset" type="button">Reiniciar</button>
+      <button id="previous" type="button">← Anterior</button>
+      <button id="play" type="button">Reproduzir</button>
+      <button id="next" type="button">Próximo →</button>
+      <label>Intervalo
+        <select id="speed">
+          <option value="1500">1,5 s</option>
+          <option value="800" selected>0,8 s</option>
+          <option value="300">0,3 s</option>
+        </select>
+      </label>
+      <span id="turn-label" aria-live="polite">Turno 0</span>
+    </div>
+    <input id="timeline" type="range" min="0" value="0"
+      aria-label="Escolher turno">
+    <p><label>Zoom <input id="zoom" type="range" min="25" max="150"
+      value="100"> <span id="zoom-label">100%</span></label></p>
+    <!-- FRAMES -->
+    <div class="legend">
+      <span>○ Zona: número de drones dentro do círculo</span>
+      <span>◌ Tracejado: zona restrita</span>
+      <span>★ Prioridade</span>
+      <span>X Bloqueada</span>
+      <span>🟠 Na conexão: drone em voo</span>
+    </div>
+    <p class="hint">Nos mapas maiores, ajuste o zoom ou use as barras de
+      rolagem. Passe o mouse sobre uma zona ou conexão para ver os detalhes.
+      A reprodução mostra estados discretos, conforme os turnos do subject.</p>
+    <noscript>Ative o JavaScript para usar os controles de reprodução.
+      O estado inicial da rede continua visível.</noscript>
+  </div>
+</main>
+<script>
+// O Python já desenhou cada quadro. Aqui só escolhemos qual fica visível.
+const frames = document.querySelectorAll('.frame');
+const timeline = document.getElementById('timeline');
+const playButton = document.getElementById('play');
+const speed = document.getElementById('speed');
+const zoom = document.getElementById('zoom');
+let current = 0;
+let timer = null;
+timeline.max = frames.length - 1;
+
+function show(turn) {
+  const oldNetwork = frames[current].querySelector('.network');
+  const scrollX = oldNetwork.scrollLeft;
+  const scrollY = oldNetwork.scrollTop;
+  frames[current].hidden = true;
+  current = Math.max(0, Math.min(turn, frames.length - 1));
+  frames[current].hidden = false;
+  timeline.value = current;
+  document.getElementById('turn-label').textContent =
+    `Turno ${current} / ${frames.length - 1}`;
+  document.getElementById('previous').disabled = current === 0;
+  document.getElementById('next').disabled = current === frames.length - 1;
+  const svg = frames[current].querySelector('svg');
+  svg.style.width = `${Number(svg.getAttribute('width')) * zoom.value / 100}px`;
+  svg.style.height = 'auto';
+  const network = frames[current].querySelector('.network');
+  network.scrollLeft = scrollX;
+  network.scrollTop = scrollY;
+  document.getElementById('zoom-label').textContent = `${zoom.value}%`;
+}
+
+function pause() {
+  clearInterval(timer);
+  timer = null;
+  playButton.textContent = 'Reproduzir';
+}
+
+function play() {
+  if (current === frames.length - 1) show(0);
+  playButton.textContent = 'Pausar';
+  timer = setInterval(() => {
+    show(current + 1);
+    if (current === frames.length - 1) pause();
+  }, Number(speed.value));
+}
+
+playButton.addEventListener('click', () => {
+  if (timer === null) play();
+  else pause();
+});
+document.getElementById('reset').addEventListener('click', () => {
+  pause();
+  show(0);
+});
+document.getElementById('previous').addEventListener('click', () => {
+  pause();
+  show(current - 1);
+});
+document.getElementById('next').addEventListener('click', () => {
+  pause();
+  show(current + 1);
+});
+timeline.addEventListener('input', () => {
+  pause();
+  show(Number(timeline.value));
+});
+zoom.addEventListener('input', () => show(current));
+speed.addEventListener('change', () => {
+  if (timer !== null) {
+    pause();
+    play();
+  }
+});
+show(0);
+</script>
+</body>
+</html>

@@ -84,8 +84,10 @@ stdout contains only movement tokens, one line per turn. Visual frames,
 statistics, and errors use stderr. Exit codes are `0` for success, `1`
 for input/routing/simulation errors, `2` for CLI usage errors, and `130`
 for interruption. Parser errors identify the source line and cause.
+The `run` recipe does not echo its shell command, so redirecting
+`make run` also preserves the movement-only stdout format.
 
-## Algorithm and implementation strategy
+## Algorithm explanation
 
 1. `MapParser` validates declarations, metadata, names, coordinates,
    capacities, and duplicate connections. `Network` stores adjacency
@@ -215,3 +217,14 @@ notes. Correctness and optimization are assessed separately.
 
 ChatGPT was used as a study guide to help understand the project and
 its concepts.
+
+## Evaluation and live coding
+
+The Portuguese study guide includes a checklist against the supplied
+evaluation scale and a practice exercise for the requested live change:
+showing one zone's occupancy and one connection's capacity usage per turn.
+`Simulation.zone_occupancy` and `Simulation.link_usage` expose the last
+validated turn's counters. `TerminalView._summary` is a small presentation
+method that can be extended without changing pathfinding or stdout.
+The exercise must still be implemented, explained, and demonstrated
+during the review; preparation does not replace the live assessment.

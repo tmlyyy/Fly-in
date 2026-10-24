@@ -59,5 +59,9 @@ class TerminalView:
         print("  " + " | ".join(zones), file=self.stream)
         if flying:
             print("  In flight: " + ", ".join(flying), file=self.stream)
-        print(f"  Delivered: {simulation.delivered}/"
-              f"{self.network.drone_count}", file=self.stream)
+        print("  " + self._summary(simulation), file=self.stream)
+
+    def _summary(self, simulation: Simulation) -> str:
+        """Build the turn summary; add extra diagnostics here if needed."""
+        return (f"Delivered: {simulation.delivered}/"
+                f"{self.network.drone_count}")

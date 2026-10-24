@@ -124,11 +124,12 @@ nesse PDF limite de 25 linhas por função, quatro parâmetros ou proibição
 de `for`. Não transplante regras de outros projetos sem fundamento no
 material desta pasta.
 
-Não existe uma folha de avaliação separada nesta pasta. Portanto, este
-trabalho segue o subject fornecido; não inventa regras de um avaliador
-que não foi disponibilizado. Correção e otimização são critérios
-separados. O subject afirma que uma contagem de turnos acima do ótimo
-não torna, por si só, a simulação incorreta.
+Além do subject, esta revisão considera a régua fornecida no arquivo
+`Intra Projects Fly-in Edit.pdf`. O PDF é uma referência local, ignorada
+pelo Git para não entrar na entrega. As seções 21 e 22 deste guia
+relacionam os critérios com a implementação e explicam o live coding.
+Correção e otimização são critérios separados: uma contagem acima do
+ótimo não torna, por si só, a simulação incorreta.
 
 ## 3. O que se pretende aprender
 
@@ -793,3 +794,213 @@ A implementação e as verificações automáticas já foram realizadas;
 a compreensão pessoal e a revisão com colegas precisam acontecer com
 você. Tente explicar uma simulação restrita, a distância reversa, o
 horizonte e a limitação de ótimo sem consultar este guia.
+
+## 21. Conferência com a régua de avaliação
+
+A referência desta revisão é o PDF `Intra Projects Fly-in Edit.pdf`,
+com sete páginas. Os testes desta conferência ficam fora da pasta de
+entrega. A tabela distingue comportamentos que podemos verificar por
+execução de itens que dependem da sua presença e explicação na defesa.
+
+| Critério da régua | O que foi conferido | Situação |
+| --- | --- | --- |
+| Presença e repositório oficial | A defesa exige a presença do aluno e o repositório correto | Conferência humana na avaliação |
+| Arquivos de entrega | Código, Makefile, configurações, mapas e documentação; PDF local ignorado pelo Git | Preparado; confira o conteúdo do Git oficial |
+| README | Primeira linha em itálico com `thamoliv`, inglês, Description, Instructions, Resources, Algorithm explanation, visualização e exemplo | Conferido |
+| Orientação a objetos | Modelos e serviços em classes; responsabilidades de parsing, roteamento, simulação e apresentação separadas | Conferido no código |
+| Tipagem e estilo | `make lint`, `flake8 .` e `mypy .`; modo estrito habilitado | Passaram |
+| Grafo próprio | Lista de adjacência; Dijkstra e A* implementados sem bibliotecas de grafos | Conferido no código |
+| Makefile | `install`, `run`, `debug`, `clean`, `lint` | Regras verificadas |
+| Parsing válido | Frota, três tipos de declaração de zona, conexões, metadados, defaults, comentários e linhas vazias | Testado |
+| Parsing inválido | Formatos, tipos e capacidades inválidos; terminais ausentes/repetidos; duplicatas e referências inexistentes | Testado com mensagens de erro |
+| Ocupação e duração | Capacidades, início/fim ilimitados, normal e priority de um turno, restricted de dois, blocked inacessível | Testado |
+| Capacidade de conexão | Capacidade compartilhada por sentidos opostos; liberação no turno da chegada restrita | Testado |
+| Visualização | Cores, IDs, ocupação, trânsito restrito e entregas no terminal/HTML | Verificado |
+| Casos simples e formato | Um drone, vários caminhos, uma linha por turno, IDs únicos e esperas omitidas | Testado |
+| Encerramento | Todos entregues; nenhuma movimentação posterior de um drone entregue | Testado |
+| Rotas e conflitos | Gargalos, ciclos, esperas e reserva antecipada da chegada restrita | Testado |
+| Explicação do algoritmo | Complexidade, reservas, heurística e limitação de ótimo estão neste guia | Você precisa explicar na defesa |
+| Nove mapas obrigatórios | Simulações válidas e contagens iguais aos ótimos da régua | Passaram |
+| Casos extremos | Um drone, grafo desconectado, gargalos e capacidades de até `1000000000000` | Testado |
+| Live coding | Dados de uso disponíveis; alteração pequena da apresentação praticada em cópia isolada | Preparação pronta; demonstração ao vivo ainda necessária |
+| Bônus | Challenger entregue em 43 turnos | Alvo técnico atingido; depende do obrigatório |
+
+O README recebeu o título **Algorithm explanation**, como aparece na
+régua. O resumo visual foi separado em `TerminalView._summary`. O
+simulador passou a guardar os contadores do último turno válido, sem
+alterar as decisões de rota nem o formato dos movimentos.
+
+Na regra `run`, o `@` antes do comando só impede que o Makefile repita
+esse comando em stdout. O programa continua sendo executado normalmente.
+Isso permite salvar a saída com `make run > arquivo.txt` sem acrescentar
+uma linha que não seja um turno da simulação.
+
+### Validade, margem e ótimo são perguntas separadas
+
+| Mapa obrigatório | Ótimo | Limite da régua: +25% | Resultado conferido |
+| --- | ---: | ---: | ---: |
+| Linear path | 4 | 5 | 4 |
+| Simple fork | 4 | 5 | 4 |
+| Basic capacity | 4 | 5 | 4 |
+| Dead end trap | 8 | 10 | 8 |
+| Circular loop | 10 | 13 | 10 |
+| Priority puzzle | 6 | 8 | 6 |
+| Maze nightmare | 13 | 17 | 13 |
+| Capacity hell | 16 | 20 | 16 |
+| Ultimate challenge | 26 | 33 | 26 |
+
+O limite é `ceil(1.25 * ótimo)`, isto é, arredondado para cima. Todos
+esses mapas passaram pela validação de movimentos antes da comparação
+dos turnos. No bônus, o resultado continua sendo 43 turnos.
+
+Para conferir um mapa na sua máquina:
+
+```sh
+make run MAP=maps/hard/02_capacity_hell.txt ARGS="--visual never --stats"
+```
+
+Flake8/mypy, execução e demonstrações não estabelecem a nota final.
+Presença, revisão por pares, compreensão e live coding são avaliados
+na defesa. A régua considera apenas o Git oficial da entrega, que deve
+ser conferido separadamente do GitHub pessoal. O guia é material de
+estudo solicitado para o repositório pessoal; confira com as regras de
+submissão quais documentos adicionais incluir no Git oficial.
+
+O ambiente disponível executou Python 3.14.4. A sintaxe e a tipagem
+miram Python 3.10, mas esta conferência não equivale a executar o
+projeto em um interpretador 3.10 instalado na máquina da avaliação.
+
+## 22. Live coding da régua em um único método
+
+### O que realmente será pedido
+
+A régua pede acrescentar a exibição, **a cada turno**, da capacidade
+utilizada de **uma zona** e **uma conexão**. O exemplo é semelhante a:
+
+```text
+Zone junction: 2/2 drones, Connection start-junction: 2/2 capacity used
+```
+
+Ela permite aproveitar uma flag, um controle visual ou uma linha de log
+que combine com a arquitetura existente. O prazo indicado é de até
+**10 minutos, incluindo a demonstração**. Você precisa localizar o
+parsing e a saída, fazer a alteração e explicar por que ela funciona.
+
+Nesta implementação, basta trabalhar no resumo do terminal. Não é
+necessário modificar A*, Dijkstra, reservas, HTML ou o parser.
+
+### Onde estão os dados
+
+| Informação | Local |
+| --- | --- |
+| Capacidade declarada da zona | `models.py`: `Hub.capacity` |
+| Leitura de `max_drones` | `parser.py`: `MapParser._hub` |
+| Capacidade declarada da conexão | `models.py`: `Connection.capacity` |
+| Leitura de `max_link_capacity` | `parser.py`: `MapParser._connection` |
+| Drones na zona após o turno | `simulation.zone_occupancy[nome]` |
+| Uso da conexão naquele turno | `simulation.link_usage[edge.key]` |
+| Lugar pequeno para mudar a saída | `display.py`: `TerminalView._summary` |
+
+Os dois contadores são `Counter`: uma chave ausente representa zero.
+Eles só são atualizados depois que o turno inteiro é validado. Se um
+movimento é rejeitado, posições e contadores anteriores permanecem
+intactos.
+
+`zone_occupancy` conta drones ativos no estado final do turno. Ela não
+conta reservas futuras. `link_usage` conta as travessias iniciadas naquele
+turno: movimento normal ou entrada no primeiro turno de um trânsito
+restrito. A chegada de um trânsito restrito libera a conexão e não cobra
+a capacidade novamente. Os dois sentidos usam a mesma chave.
+
+### A alteração para praticar
+
+Abra `display.py` e encontre `def _summary`. O método atual já mostra
+quantos drones foram entregues. Para treinar o pedido da régua, substitua
+**somente esse método** pela versão abaixo:
+
+```python
+    def _summary(self, simulation: Simulation) -> str:
+        """Show deliveries and the capacity of one zone and connection."""
+        zone = self.network.hubs["junction"]
+        edge = self.network.connections[("junction", "start")]
+        zone_used = simulation.zone_occupancy[zone.name]
+        link_used = simulation.link_usage[edge.key]
+        return (
+            f"Delivered: {simulation.delivered}/{self.network.drone_count}"
+            f" | Zone {zone.name}: {zone_used}/{zone.capacity} drones"
+            f", Connection {edge.name}: "
+            f"{link_used}/{edge.capacity} capacity used"
+        )
+```
+
+As primeiras quatro atribuições escolhem os recursos e leem os números.
+As strings seguintes montam a mensagem. O método não muda nenhuma posição,
+capacidade ou decisão de rota.
+
+Os nomes foram escolhidos para `maps/easy/02_simple_fork.txt`. A conexão
+é declarada como `start-junction`, mas sua chave é `("junction", "start")`
+porque os extremos são ordenados alfabeticamente para compartilhar os
+dois sentidos. `edge.name` conserva a ordem da declaração para exibição.
+Se o avaliador escolher outro mapa, ajuste esses nomes para recursos
+que existam nele.
+
+Para esse exercício, escolha uma zona intermediária. Início e fim são
+ilimitados: se forem escolhidos, mostre `unlimited` como limite em vez
+de usar o valor bruto de `Hub.capacity`. Drones entregues são removidos
+das posições ativas; o total entregue continua em `simulation.delivered`.
+
+### Como demonstrar
+
+Depois da pequena alteração, execute:
+
+```sh
+make lint
+make run MAP=maps/easy/02_simple_fork.txt ARGS="--visual always --color never"
+```
+
+`--visual always` é necessário para mostrar o resumo mesmo quando o
+terminal não é detectado como interativo. `--color never` facilita ler
+e comparar o texto. Não use `--gui` para essa demonstração: essa opção
+seleciona a apresentação no navegador e desativa o resumo do terminal.
+
+Os números esperados para os recursos escolhidos são:
+
+| Estado/turno | junction | start-junction | Entregues |
+| ---: | ---: | ---: | ---: |
+| Inicial, 0 | 0/2 | 0/2 | 0/4 |
+| 1 | 2/2 | 2/2 | 0/4 |
+| 2 | 2/2 | 2/2 | 0/4 |
+| 3 | 0/2 | 0/2 | 2/4 |
+| 4 | 0/2 | 0/2 | 4/4 |
+
+O estado 0 é apenas o desenho inicial, antes do primeiro movimento.
+Observe que a conexão volta a zero quando não é usada. O contador não
+é uma soma acumulada de todos os drones que já passaram por ela.
+
+Para demonstrar que a mudança não quebrou o formato obrigatório:
+
+```sh
+make run MAP=maps/easy/02_simple_fork.txt ARGS="--visual always --color never" > /tmp/fly-in-live-output.txt
+python3 fly_in.py maps/easy/02_simple_fork.txt --check /tmp/fly-in-live-output.txt --visual never
+```
+
+O resumo e os diagnósticos vão para **stderr**; o arquivo recebe somente
+os movimentos de **stdout**. A segunda chamada deve confirmar quatro
+drones entregues em quatro turnos.
+
+### Roteiro para caber nos dez minutos
+
+1. Mostre `_hub` e `_connection` no parser e os campos de capacidade nos
+   modelos. Explique que esses valores já foram lidos corretamente.
+2. Abra `_summary` em `display.py` e escolha os nomes presentes no mapa.
+3. Leia os dois contadores e acrescente os valores ao texto do resumo.
+4. Rode `make lint` e a demonstração com `--visual always`.
+5. Explique a saída: ocupação final da zona, uso da conexão no turno,
+   limites e separação entre stdout e stderr.
+
+Pratique esse roteiro com um cronômetro e sem consultar o trecho pronto.
+A versão do código entregue mantém o resumo original; os contadores
+apenas deixam os dados acessíveis. A alteração desta seção foi testada
+em uma cópia isolada, inclusive com flake8 e mypy estrito. Ter o exemplo
+no guia não substitui implementar e explicar a mudança que o avaliador
+solicitar ao vivo.

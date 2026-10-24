@@ -20,6 +20,10 @@ class Simulation:
             drone: network.start
             for drone in range(1, network.drone_count + 1)
         }
+        self.zone_occupancy: Counter[str] = Counter({
+            network.start: network.drone_count,
+        })
+        self.link_usage: Counter[tuple[str, str]] = Counter()
 
     def step(self, moves: list[Move]) -> None:
         """Validate a simultaneous turn before committing any state."""
@@ -67,6 +71,9 @@ class Simulation:
             if count > self.network.connections[key].capacity:
                 raise SimulationError(f"connection {key} capacity exceeded")
         self.positions = next_positions
+        # Expose only the usage of the last successfully validated turn.
+        self.zone_occupancy = occupancy
+        self.link_usage = links
         self.delivered += arrivals
         self.turn += 1
 

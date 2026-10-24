@@ -12,17 +12,27 @@ in which the final drone arrives.
 
 The implementation uses Python 3.10 or later, an object-oriented design,
 type hints, docstrings, and standard-library algorithms. No graph library
-or third-party runtime dependency is used. All project files are at the
-repository root, following chapter X of the subject.
+or third-party runtime dependency is used. Python modules and documentation
+are at the repository root; maps are grouped by difficulty under `maps/`.
 
 ## Instructions
+
+The supplied maps are organized as follows:
+
+```text
+maps/
+  easy/         3 easy maps
+  medium/       3 medium maps
+  hard/         3 hard maps
+  challenger/   1 optional challenge
+```
 
 Install the development tools and run the project:
 
 ```sh
 make install
 make run
-make gui
+make run ARGS="--gui"
 ```
 
 `make install` creates `.venv` and installs flake8 and mypy. If those
@@ -32,15 +42,15 @@ them with `make install VENV_FLAGS=--system-site-packages`.
 Choose a different map or request statistics:
 
 ```sh
-make run MAP=02_capacity_hell.txt ARGS="--stats"
-make gui MAP=02_circular_loop.txt
+make run MAP=maps/hard/02_capacity_hell.txt ARGS="--stats"
+make run MAP=maps/medium/02_circular_loop.txt ARGS="--gui"
 ```
 
 The simulator also runs without installing development packages:
 
 ```sh
-python3 fly_in.py 01_linear_path.txt
-python3 fly_in.py 02_circular_loop.txt --gui
+python3 fly_in.py maps/easy/01_linear_path.txt
+python3 fly_in.py maps/medium/02_circular_loop.txt --gui
 python3 fly_in.py --help
 ```
 
@@ -49,22 +59,25 @@ Other available commands:
 ```sh
 make debug
 make lint
-make lint-strict
-make benchmark
 make clean
 ```
 
 `make debug` starts the built-in `pdb` debugger. `make clean` removes
 caches while preserving the source and virtual environment. `make lint`
-uses the mandatory flake8 and mypy flags; `make lint-strict` also checks
-strict typing. `make benchmark` independently validates all ten supplied
-maps and reports turn counts. Local test programs are not submitted.
+uses the mandatory flake8 and mypy flags with strict typing enabled in
+`mypy.ini`. These are the five Makefile targets required by the subject:
+`install`, `run`, `debug`, `clean`, and `lint`.
+
+To compare a map's turn count with the results below, use
+`make run MAP=maps/easy/01_linear_path.txt ARGS="--stats"`. Every run independently
+validates its movements before printing them. Local test programs and
+packaging tools are not included in this delivery folder.
 
 To save movements and validate them independently:
 
 ```sh
-python3 fly_in.py 01_linear_path.txt --visual never > /tmp/fly-in-output.txt
-python3 fly_in.py 01_linear_path.txt --check /tmp/fly-in-output.txt
+python3 fly_in.py maps/easy/01_linear_path.txt --visual never > /tmp/fly-in-output.txt
+python3 fly_in.py maps/easy/01_linear_path.txt --check /tmp/fly-in-output.txt
 ```
 
 stdout contains only movement tokens, one line per turn. Visual frames,
@@ -114,7 +127,9 @@ The horizon can grow with the fleet size.
 
 ## Visual representation
 
-`make gui` generates `build/fly-in.html` and opens it in your browser.
+`make run ARGS="--gui"` generates `build/fly-in.html` and opens it in
+your browser. GUI means "graphical user interface"; `--gui` is an
+optional display flag passed to the program, not a required Makefile rule.
 The page works offline without a server or graphics package. It shows
 zone colors, occupants, capacities, in-flight drones, and delivery counts.
 Play/pause, previous/next turn, restart, interval, timeline, zoom, and
@@ -133,7 +148,7 @@ Large simulations produce larger HTML files because frames are stored.
 To save the page without opening a browser:
 
 ```sh
-python3 fly_in.py 01_linear_path.txt --html build/fly-in.html
+python3 fly_in.py maps/easy/01_linear_path.txt --html build/fly-in.html
 ```
 
 A colored terminal view is also available. It enables automatically

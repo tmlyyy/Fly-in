@@ -14,8 +14,8 @@ a rede e a posição dos drones. Não é obrigatório usar apenas o terminal.
 Para abrir a visualização desta implementação:
 
 ```sh
-make gui
-make gui MAP=02_circular_loop.txt
+make run ARGS="--gui"
+make run MAP=maps/medium/02_circular_loop.txt ARGS="--gui"
 ```
 
 O navegador mostra os drones por turno. Use **Reproduzir/Pausar**, **Anterior**,
@@ -30,13 +30,21 @@ No turno seguinte ele aparece na zona de destino. Zonas prioritárias
 têm estrela e zonas bloqueadas têm um X.
 
 A página é **offline**. Não existe servidor nem instalação de uma
-biblioteca gráfica. `make gui` salva `build/fly-in.html` e pede ao
+biblioteca gráfica. `make run ARGS="--gui"` salva `build/fly-in.html` e pede ao
 navegador padrão para abrir esse arquivo. Você também pode abrir o HTML
 manualmente ou gerar sem abrir:
 
 ```sh
-python3 fly_in.py 01_linear_path.txt --html build/fly-in.html
+python3 fly_in.py maps/easy/01_linear_path.txt --html build/fly-in.html
 ```
+
+GUI significa *Graphical User Interface*, ou interface gráfica do usuário.
+`--gui` é uma opção do programa para escolher a visualização no navegador.
+O subject permite essa visualização, mas não exige uma regra `make gui`.
+Por isso, o Makefile desta pasta tem apenas as cinco regras obrigatórias:
+`install`, `run`, `debug`, `clean` e `lint`. Você usa a mesma regra `run`
+nos dois modos: sem argumentos para o terminal, ou com `ARGS="--gui"`
+para o navegador.
 
 Para manter o código compreensível, a visualização usa uma ideia direta:
 
@@ -66,7 +74,10 @@ Estude os arquivos nesta ordem, sem tentar entender tudo de uma vez:
 | `routing.py` | Como as rotas e esperas são planejadas |
 | `fly_in.py` | Como a aplicação conecta essas partes |
 
-Na versão de entrega, os módulos, mapas e este guia ficam na raiz do repositório, conforme o capítulo X do subject.
+Os módulos e este guia ficam na raiz do repositório. Os mapas ficam
+separados por dificuldade em `maps/easy/`, `maps/medium/`, `maps/hard/`
+e `maps/challenger/`. O Makefile usa o mapa linear de `maps/easy/`
+por padrão; use `MAP=caminho/do/mapa.txt` para escolher outro.
 
 ## 1. O problema que você precisa conseguir explicar
 
@@ -91,10 +102,10 @@ viagem de todos os drones, nem o tempo que o computador leva para rodar.
 
 | Parte | Exigência | Implementação/verificação |
 | --- | --- | --- |
-| III.1 | Python 3.10+, flake8, mypy e docstrings | Todos os módulos; `make lint` e `make lint-strict` |
+| III.1 | Python 3.10+, flake8, mypy e docstrings | Todos os módulos; `make lint`, com tipagem estrita |
 | III.1 | Erros tratados e recursos fechados | `Application`, exceções próprias, arquivos abertos com `with` |
 | III.2 | Makefile com install/run/debug/clean/lint | `Makefile` |
-| III.3 | Testes locais, .gitignore e ambiente virtual | `tests/`, `.gitignore`, `.venv` |
+| III.3 | Testes locais, .gitignore e ambiente virtual | Testes executados no desenvolvimento; `.gitignore` e `.venv` |
 | V | Não usar bibliotecas de grafos | Listas de adjacência e algoritmos próprios |
 | V | Projeto completamente orientado a objetos e tipado | Classes de domínio e serviços; mypy estrito |
 | VI/VII.4 | Ler sintaxe, comentários, metadados e capacidades | `MapParser` em `parser.py` |
@@ -103,7 +114,7 @@ viagem de todos os drones, nem o tempo que o computador leva para rodar.
 | VII.3 | Movimentos simultâneos e restritos de dois turnos | `Leg`, `Transit`, `Simulation` |
 | VII.5 | Uma linha por turno no formato D<ID>-destino | `Move.__str__` e `Application.run` |
 | VII.1/VI | Representação visual e cores dos metadados | `TerminalView`, `GraphicalView` e `viewer.html` |
-| VII.6 | Medir validade separadamente da otimização | `benchmark.py` |
+| VII.6 | Medir validade separadamente da otimização | Validação em cada execução; contagem com `--stats` |
 | VIII | README em inglês, crédito, instruções e recursos | `README.md` |
 | IX | Bônus: desafio em 43 turnos | Benchmark do Challenger |
 | X | Arquivos entregáveis na raiz e defesa do código | Módulos e documentação na raiz |
@@ -144,12 +155,11 @@ Na raiz desta pasta:
 ```sh
 make install
 make run
-make gui
-make run MAP=02_circular_loop.txt ARGS="--visual always --color always --stats"
+make run ARGS="--gui"
+make run MAP=maps/medium/02_circular_loop.txt ARGS="--visual always --color always --stats"
 make lint
-make lint-strict
-make benchmark
-make test
+make debug
+make clean
 ```
 
 `make install` cria um ambiente virtual e instala flake8/mypy. O programa
@@ -163,10 +173,11 @@ instalação foi verificada com
 ferramentas. Sem essa opção, o ambiente é isolado e o pip precisa de
 acesso aos pacotes ou de um espelho local configurado.
 
-`make benchmark` usa a pasta de testes locais, que está no workspace e é
-ignorado pelo Git porque o subject diz que esses programas não são
-entregues nem avaliados. Se você clonar somente a entrega, esse arquivo
-não estará presente; `make benchmark` continua disponível.
+Os programas de teste e de empacotamento foram retirados desta pasta de
+entrega. O subject informa que os testes locais não são entregues nem
+avaliados. Para conferir um mapa, execute
+`make run MAP=maps/easy/01_linear_path.txt ARGS="--stats"`: a aplicação valida a
+simulação antes de imprimir e informa a quantidade de turnos.
 
 Observe três canais diferentes:
 
@@ -180,8 +191,8 @@ O terminal normalmente mostra stdout e stderr juntos. Eles continuam
 sendo canais diferentes. Para salvar só os movimentos:
 
 ```sh
-python3 fly_in.py 01_linear_path.txt --visual never > /tmp/fly-in-saida.txt
-python3 fly_in.py 01_linear_path.txt --check /tmp/fly-in-saida.txt
+python3 fly_in.py maps/easy/01_linear_path.txt --visual never > /tmp/fly-in-saida.txt
+python3 fly_in.py maps/easy/01_linear_path.txt --check /tmp/fly-in-saida.txt
 ```
 
 No depurador:
@@ -584,10 +595,11 @@ pois o subject não relaciona distância cartesiana com duração de voo.
 | Ultimate challenge | 26 | 26 |
 | The Impossible Dream | 43 | 43 |
 
-Reproduza com `make benchmark`. O programa mede os turnos e reproduz
-cada resultado no validador. Os números da tabela são medidos nesta
-implementação; a coluna de ótimo vem do PDF, não de uma prova produzida
-pelo benchmark.
+Para conferir cada resultado, use `make run MAP=maps/medium/02_circular_loop.txt
+ARGS="--stats"` em uma única linha. A aplicação valida os movimentos e
+informa a contagem de turnos. Os números da tabela foram medidos nesta
+implementação; a coluna de ótimo vem do PDF, não de uma prova de ótimo
+produzida pelo programa.
 
 O README dos mapas fala em um recorde antigo de 45 turnos no Challenger.
 O PDF versão 2.0 estabelece 43 e explica o limite: a primeira entrega
@@ -597,7 +609,8 @@ O bônus só é considerado quando o obrigatório está completo.
 
 ## 15. O que os testes verificam
 
-Os testes locais usam `unittest`, sem dependência adicional. Eles incluem:
+Os testes executados no desenvolvimento usaram `unittest`, sem dependência
+adicional. Seus arquivos não fazem parte desta entrega. Eles incluíram:
 
 - Gramática válida, Unicode, comentários e metadados em outra ordem.
 - Frota/capacidades inválidas, coordenadas inválidas, tipo inexistente,
@@ -619,8 +632,8 @@ e quantidade de drones. São testes de validade, não uma certificação de
 ótimo global. Usar semente fixa permite reproduzir os mesmos casos.
 
 `make lint` executa as verificações obrigatórias, com todas as flags
-de mypy pedidas no PDF. `make lint-strict` executa uma verificação ainda
-mais estrita. Nenhuma regra de estilo foi desativada. O uso de um único
+de mypy pedidas no PDF e o modo estrito habilitado em `mypy.ini`.
+Nenhuma regra de estilo foi desativada. O uso de um único
 worker do flake8 permite rodar também em ambientes que bloqueiam os
 sockets usados por pools de processos.
 
@@ -735,11 +748,12 @@ inválido. A contrapartida é manter o plano inteiro em memória.
 ## 19. Exercícios práticos de alteração
 
 Faça em uma cópia ou branch de estudo. Após cada alteração, rode
-`make lint-strict`, `make benchmark` e o benchmark se a lógica de rotas mudar.
+`make lint` e execute os mapas com `make run MAP=maps/medium/02_circular_loop.txt
+ARGS="--stats"` em uma única linha se a lógica de rotas mudar.
 
 1. **Cor desconhecida:** mude `color=blue` para `color=oceano`. Preveja
    se o parser deve aceitar e o que a visualização mostrará.
-2. **Gargalo de zona:** em `03_basic_capacity.txt`, reduza a capacidade
+2. **Gargalo de zona:** em `maps/easy/03_basic_capacity.txt`, reduza a capacidade
    de `bottleneck` de 2 para 1. Calcule por que a última entrega passa
    de 4 para 6 turnos, sem mudar a capacidade das conexões.
 3. **Nova estatística:** acrescente ao relatório o número de tokens

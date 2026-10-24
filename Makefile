@@ -2,10 +2,10 @@ PYTHON ?= python3
 VENV ?= .venv
 VENV_FLAGS ?=
 PY = $(VENV)/bin/python
-MAP ?= 01_linear_path.txt
+MAP ?= maps/easy/01_linear_path.txt
 ARGS ?=
 
-.PHONY: install run gui debug clean lint lint-strict benchmark
+.PHONY: install run debug clean lint
 
 install:
 	$(PYTHON) -m venv $(VENV_FLAGS) $(VENV)
@@ -13,9 +13,6 @@ install:
 
 run:
 	$(PY) fly_in.py "$(MAP)" $(ARGS)
-
-gui:
-	$(PY) fly_in.py "$(MAP)" --gui $(ARGS)
 
 debug:
 	$(PY) -m pdb fly_in.py "$(MAP)" $(ARGS)
@@ -26,10 +23,3 @@ clean:
 lint:
 	$(PY) -m flake8 .
 	$(PY) -m mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
-
-lint-strict:
-	$(PY) -m flake8 .
-	$(PY) -m mypy . --strict
-
-benchmark:
-	$(PY) benchmark.py
